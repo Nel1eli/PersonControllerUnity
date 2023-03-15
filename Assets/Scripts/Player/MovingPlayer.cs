@@ -3,9 +3,11 @@ using UnityEngine.UI;
 
 
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Animator))]
 public class MovingPlayer : MonoBehaviour
 {
     private CharacterController controller;
+    private Animator animator;
 
     [Header("GameObjectComponents")]
     public Camera cameraPlayer;
@@ -46,6 +48,7 @@ public class MovingPlayer : MonoBehaviour
     void Start()
     {
         controller = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
         Cursor.visible = false;
         fovStart = fovInit = 70;
 
@@ -102,6 +105,10 @@ public class MovingPlayer : MonoBehaviour
         staminaBar.value = stamina;
         cameraPlayer.fieldOfView = fovInit;
         controller.Move(moveDirection * Time.deltaTime * speedCurrent);
+        if ((moveVer != 0 || moveHor != 0) && !sprint) animator.SetInteger("Walk", 1);
+        else if ((moveVer != 0 || moveHor != 0) && sprint) animator.SetInteger("Walk", 2);
+        else animator.SetInteger("Walk", 0);
+        
     }
     private void Rotate()
     {
