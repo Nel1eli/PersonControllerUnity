@@ -12,7 +12,6 @@ public class MovingPlayer : MonoBehaviour
     [Header("GameObjectComponents")]
     public Camera cameraPlayer;
     public GameObject player;
-    public Slider staminaBar;
 
     [Header("Move Components")]
     [SerializeField] private float moveSpeed = 3;
@@ -49,12 +48,10 @@ public class MovingPlayer : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
+        Screen.lockCursor = true;
         Cursor.visible = false;
         fovStart = fovInit = 70;
 
-        staminaBar.maxValue = maxStamina;
-        staminaBar.minValue = minStamina;
-        staminaBar.value = maxStamina;
         stamina = maxStamina;
     }
     void Update()
@@ -87,7 +84,6 @@ public class MovingPlayer : MonoBehaviour
         bool sprint = Input.GetKey(KeyCode.LeftShift);
         if (sprint && !isLock && !isBlock && (moveVer != 0 || moveHor !=0))
         {
-            staminaBar.gameObject.SetActive(true);
             stamina -= 20 * Time.deltaTime;
             speedCurrent = Mathf.Lerp(speedCurrent, runSpeedKoef * moveSpeed, Time.deltaTime * smoothSpeed);
             fovInit = Mathf.Lerp(fovInit, fovStart * 1.5f, Time.deltaTime * smoothSpeed);
@@ -97,12 +93,10 @@ public class MovingPlayer : MonoBehaviour
         else if (!isLock && stamina <= 100)
         {
             if (stamina >= minStamina + 30) isBlock = false;
-            staminaBar.gameObject.SetActive(false); 
             speedCurrent = moveSpeed;
             stamina += 7.5f * Time.deltaTime;
             fovInit = Mathf.Lerp(fovInit, fovStart, Time.deltaTime * smoothSpeed * 0.5f);
         }
-        staminaBar.value = stamina;
         cameraPlayer.fieldOfView = fovInit;
         controller.Move(moveDirection * Time.deltaTime * speedCurrent);
         if ((moveVer != 0 || moveHor != 0) && !sprint) animator.SetInteger("Walk", 1);
