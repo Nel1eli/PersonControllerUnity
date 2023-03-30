@@ -48,8 +48,8 @@ public class MovingPlayer : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
-        Screen.lockCursor = true;
         Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
         fovStart = fovInit = 70;
 
         stamina = maxStamina;
@@ -86,7 +86,7 @@ public class MovingPlayer : MonoBehaviour
         {
             stamina -= 20 * Time.deltaTime;
             speedCurrent = Mathf.Lerp(speedCurrent, runSpeedKoef * moveSpeed, Time.deltaTime * smoothSpeed);
-            fovInit = Mathf.Lerp(fovInit, fovStart * 1.5f, Time.deltaTime * smoothSpeed);
+            fovInit = Mathf.Lerp(fovInit, fovStart - fovStart * 0.15f, Time.deltaTime * smoothSpeed);
             if (stamina <= minStamina+5) isBlock = true;
         }
 
@@ -106,11 +106,11 @@ public class MovingPlayer : MonoBehaviour
     }
     private void Rotate()
     {
-        if (!isLock)
+        if (!isLock && !InteractPlayer.statusRead)
         {
             rotateHor += Input.GetAxis("Mouse X") * rotateSpeed;
             rotateVer += Input.GetAxis("Mouse Y") * rotateSpeed;
-            rotateVer = Mathf.Clamp(rotateVer, -50, 50);
+            rotateVer = Mathf.Clamp(rotateVer, -60, 60);
             rotateHorCurrent = Mathf.SmoothDamp(rotateHor, rotateHorCurrent, ref currentVelocityHor, smoothTime);
             rotateVerCurrent = Mathf.SmoothDamp(rotateVer, rotateVerCurrent, ref currentVelocityVer, smoothTime);
             cameraPlayer.transform.rotation = Quaternion.Euler(-rotateVerCurrent, rotateHorCurrent, 0);
