@@ -1,13 +1,19 @@
+using System.Net.Http.Headers;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
-using UnityEngine.UI;
-
 
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(Animator))]
 public class MovingPlayer : MonoBehaviour
 {
+    public AudioClip[] steps;
+    public AudioSource m_Source;
+
     private CharacterController controller;
     private Animator animator;
+
+    [Header("Звуки шагов по полу")]
+    [SerializeField] private AudioClip[] stepsTerrain;
 
     [Header("GameObjectComponents")]
     public Camera cameraPlayer;
@@ -44,6 +50,10 @@ public class MovingPlayer : MonoBehaviour
     private bool isLock; // Проверка паузы
     private bool isBlock; // Отдышка
 
+    private float moveVer;
+    private float moveHor;
+    private bool sprint;
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -56,6 +66,15 @@ public class MovingPlayer : MonoBehaviour
     }
     void Update()
     {
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, -transform.up, out hit, 2))
+        {
+            if (hit.collider.tag == "SurfaceTerrain")
+            {
+                steps = stepsTerrain;
+            }
+        }
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             isLock = !isLock;
@@ -72,17 +91,35 @@ public class MovingPlayer : MonoBehaviour
                 Cursor.visible = false;
             }
         }
-        Movement();
+        if (controller.isGrounded)
+        {
+            moveVer = Input.GetAxis("Vertical");
+            moveHor = Input.GetAxis("Horizontal");
+            sprint = Input.GetKey(KeyCode.LeftShift);
+        }
+        if (!controller.isGrounded) Movement();
+        else if ((moveVer != 0 || moveHor != 0) && !sprint && controller.isGrounded)
+        {
+            animator.SetInteger("Walk", 1);
+            Movement();
+        }
+        else if ((moveVer != 0 || moveHor != 0) && sprint && controller.isGrounded)
+        {
+            animator.SetInteger("Walk", 2);
+            Movement();
+        }
+
+        else if (controller.isGrounded) animator.SetInteger("Walk", 0);
+
         Rotate();
+
     }
     private void Movement()
     {
-        float moveVer = Input.GetAxis("Vertical");
-        float moveHor = Input.GetAxis("Horizontal");
         Vector3 moveDirection = new Vector3(moveHor, -GravityMoment(), moveVer);
         moveDirection = transform.TransformDirection(moveDirection);
-        bool sprint = Input.GetKey(KeyCode.LeftShift);
-        if (sprint && !isLock && !isBlock && (moveVer != 0 || moveHor !=0))
+        controller.Move(moveDirection * Time.deltaTime * speedCurrent);
+        if (sprint && !isLock && !isBlock)
         {
             stamina -= 20 * Time.deltaTime;
             speedCurrent = Mathf.Lerp(speedCurrent, runSpeedKoef * moveSpeed, Time.deltaTime * smoothSpeed);
@@ -98,11 +135,8 @@ public class MovingPlayer : MonoBehaviour
             fovInit = Mathf.Lerp(fovInit, fovStart, Time.deltaTime * smoothSpeed * 0.5f);
         }
         cameraPlayer.fieldOfView = fovInit;
-        controller.Move(moveDirection * Time.deltaTime * speedCurrent);
-        if ((moveVer != 0 || moveHor != 0) && !sprint) animator.SetInteger("Walk", 1);
-        else if ((moveVer != 0 || moveHor != 0) && sprint) animator.SetInteger("Walk", 2);
-        else animator.SetInteger("Walk", 0);
         
+        if (!m_Source.isPlaying && controller.isGrounded) PlayFootStepAudio();
     }
     private void Rotate()
     {
@@ -123,4 +157,21 @@ public class MovingPlayer : MonoBehaviour
         else gravityCurrent = 0;
         return gravityCurrent;
     }
+
+    public void PlayFootStepAudio()
+    {
+        if (!controller.isGrounded)
+        {
+            return;
+        }
+        // pick & play a random footstep sound from the array,
+        // excluding sound at index 0
+        int n = Random.Range(0, steps.Length-1);
+        m_Source.clip = steps[n];
+        m_Source.PlayOneShot(m_Source.clip);
+        // move picked sound to index 0 so it's not picked next time
+        steps[n] = steps[0];
+        steps[0] = m_Source.clip;
+    }
+
 }

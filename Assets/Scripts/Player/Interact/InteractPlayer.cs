@@ -3,15 +3,15 @@ using UnityEngine.UI;
 
 public class InteractPlayer : MonoBehaviour
 {
-    [SerializeField] private Image Crosshair;
-    [SerializeField] private Image image;
+    
+    [SerializeField] private Image crosshair;
+    [SerializeField] private Image _image;
     [SerializeField] private Camera _camera;
     private Ray _ray;
     private RaycastHit _hit;
     public static bool statusRead = false;
 
     [SerializeField] private float _distance;
-
     private void Update()
     {
         Ray();
@@ -38,33 +38,41 @@ public class InteractPlayer : MonoBehaviour
 
     private void Interact()
     {
-        if(_hit.transform != null && _hit.transform.GetComponent<InteractDoor>())
+        bool isObjectSerialze = false;
+        if (_hit.transform != null)
         {
-            image.gameObject.SetActive(true);
-            Debug.DrawRay(_ray.origin, _ray.direction * _distance, Color.green);
-            if (Input.GetMouseButtonDown(0))
-            {
-                _hit.transform.GetComponent<InteractDoor>().Open();
-            }
-        }
-        else { 
-            image.gameObject.SetActive(false);
-        }
+            _image.gameObject.SetActive(true);
+            crosshair.gameObject.SetActive(false);
 
-        if((_hit.transform != null && _hit.transform.GetComponent<InteractPaper>()) || statusRead)
-        {
-            image.gameObject.SetActive(true);
-            Debug.DrawRay(_ray.origin, _ray.direction * _distance, Color.green);
-            if (Input.GetMouseButtonDown(0))
+            if (_hit.transform.GetComponent<InteractDoor>())
             {
-                statusRead = !statusRead;
-                _hit.transform.GetComponent<InteractPaper>().Read(statusRead);
-                Crosshair.gameObject.SetActive(!statusRead);
+                isObjectSerialze = true;
+                Debug.DrawRay(_ray.origin, _ray.direction * _distance, Color.green);
+
+                if (Input.GetMouseButtonDown(0))
+                {
+                    _hit.transform.GetComponent<InteractDoor>().InteractWithDoor();
+
+                }
+            }
+
+
+
+            if (_hit.transform.GetComponent<InteractPaper>() || statusRead)
+            {
+                isObjectSerialze = true;
+                Debug.DrawRay(_ray.origin, _ray.direction * _distance, Color.green);
+                if (Input.GetMouseButtonDown(0))
+                {
+                    statusRead = !statusRead;
+                    _hit.transform.GetComponent<InteractPaper>().Read(statusRead);
+                    crosshair.gameObject.SetActive(!statusRead);
+                }
             }
         }
-        else
-        {
-            image.gameObject.SetActive(false);
+        if (!isObjectSerialze) {
+            _image.gameObject.SetActive(false);
+            crosshair.gameObject.SetActive(true);
         }
     }
 }
